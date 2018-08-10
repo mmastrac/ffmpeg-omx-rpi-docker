@@ -26,6 +26,11 @@ RUN make -j4
 
 RUN ldconfig
 
+# Maybe necessary?
+#ADD omx.patch .
+#RUN patch -p0 < omx.patch
+#RUN make -j4
+
 # TODO: Use a multi-stage build to pull down that binary
 RUN ln -s `pwd`/ffmpeg /usr/local/bin/ffmpeg
 WORKDIR "/root"

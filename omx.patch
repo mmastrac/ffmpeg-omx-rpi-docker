@@ -1,0 +1,34 @@
+--- libavcodec/omx.c.orig	2018-08-10 02:15:21.833649127 +0000
++++ libavcodec/omx.c	2018-08-10 02:18:28.081581046 +0000
+@@ -19,6 +19,9 @@
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+  */
+
++#define OMX_SKIP64BIT
++#include "/opt/vc/include/IL/OMX_Broadcom.h"
++
+ #include "config.h"
+
+ #if CONFIG_OMX_RPI
+@@ -392,6 +395,7 @@
+     OMX_PARAM_PORTDEFINITIONTYPE in_port_params = { 0 }, out_port_params = { 0 };
+     OMX_VIDEO_PARAM_PORTFORMATTYPE video_port_format = { 0 };
+     OMX_VIDEO_PARAM_BITRATETYPE vid_param_bitrate = { 0 };
++    OMX_CONFIG_PORTBOOLEANTYPE vid_param_inline_header = { 0 };
+     OMX_ERRORTYPE err;
+     int i;
+
+@@ -508,6 +512,13 @@
+     CHECK(err);
+     s->num_out_buffers = out_port_params.nBufferCountActual;
+
++    INIT_STRUCT(vid_param_inline_header);
++    vid_param_inline_header.nPortIndex = s->out_port;
++    vid_param_inline_header.bEnabled = 1;
++    err = OMX_SetParameter(s->handle, OMX_IndexParamBrcmVideoAVCInlineHeaderEnable, &vid_param_inline_header);
++    if (err != OMX_ErrorNone)
++        av_log(avctx, AV_LOG_WARNING, "Unable to set OMX_IndexParamBrcmVideoAVCInlineHeaderEnable parameter\n");
++
+     INIT_STRUCT(vid_param_bitrate);
+     vid_param_bitrate.nPortIndex     = s->out_port;
+     vid_param_bitrate.eControlRate   = OMX_Video_ControlRateVariable;
