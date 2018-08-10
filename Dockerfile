@@ -12,19 +12,18 @@ WORKDIR "/root"
 RUN git clone --depth 1 https://github.com/raspberrypi/userland.git
 WORKDIR "/root/userland"
 RUN ./buildme
+
 # Required to link deps
 RUN echo "/opt/vc/lib" > /etc/ld.so.conf.d/00-vmcs.conf
+RUN ldconfig
 
 # Build FFMPEG
 RUN curl https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz -o ffmpeg.tar.xz
 RUN tar xf ffmpeg.tar.xz
 WORKDIR "ffmpeg-${FFMPEG_VERSION}"
 RUN PKG_CONFIG_PATH=/opt/vc/lib/pkgconfig ./configure --arch=armel --target-os=linux \
-	--enable-gpl --enable-omx --enable-omx-rpi --enable-nonfree --enable-mmal \
-	--incdir=/opt/vc/include/IL
+	--enable-gpl --enable-omx --enable-omx-rpi --enable-nonfree --enable-mmal
 RUN make -j4
-
-RUN ldconfig
 
 # Maybe necessary?
 #ADD omx.patch .
@@ -34,3 +33,11 @@ RUN ldconfig
 # TODO: Use a multi-stage build to pull down that binary
 RUN ln -s `pwd`/ffmpeg /usr/local/bin/ffmpeg
 WORKDIR "/root"
+
+FROM debian:buster
+COPY --from=0 /root/userland/ffmpeg-4.0.2/ffmpeg /usr/local/bin/ffmpeg
+COPY --from=0 /opt/vc /opt/vc
+
+# Required to link deps
+RUN echo "/opt/vc/lib" > /etc/ld.so.conf.d/00-vmcs.conf
+RUN ldconfig
